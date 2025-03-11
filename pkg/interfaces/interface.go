@@ -1,4 +1,4 @@
-package models
+package interfaces
 
 // TransportMethod définit l'interface commune pour tous les moyens de transport
 type TransportMethod interface {
