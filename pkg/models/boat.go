@@ -16,7 +16,7 @@ func (b Boat) DeliverPackage(destination string) (string, error) {
 		return "", errors.New("conditions météo défavorables")
 	}
 	time.Sleep(5 * time.Second) // Livraison lente
-	return fmt.Sprintf("Bateau %s: Colis livré à %s", b.ID, destination), nil
+	return fmt.Sprintf("⛴ Bateau %s: Colis livré à %s", b.ID, destination), nil
 }
 
 func (b Boat) GetStatus() string {
