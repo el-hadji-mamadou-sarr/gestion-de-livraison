@@ -20,5 +20,5 @@ func (b Boat) DeliverPackage(destination string) (string, error) {
 }
 
 func (b Boat) GetStatus() string {
-	return fmt.Sprintf("Bateau %s: Météo actuelle - %s", b.ID, b.Weather)
+	return fmt.Sprintf("Bateau %s: Météo actuelle - %s", b.ID, b.Weather, time.Now().Format("  2006-01-02 15:04:05"))
 }

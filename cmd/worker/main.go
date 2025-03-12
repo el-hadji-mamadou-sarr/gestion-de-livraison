@@ -2,32 +2,54 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"strings"
 	"time"
+
+	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/factory"
+	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/utils"
+	"github.com/manifoldco/promptui"
 )
 
-const statusFile = "status.log"
-
-func readStatus() {
+func main() {
 	for {
-		data, err := os.ReadFile(statusFile)
-		if err != nil {
-			fmt.Println("Error reading status file:", err)
+		transportType := utils.InteractiveMenu()
+		if transportType == "" {
 			continue
 		}
 
-		if len(data) > 0 {
-			fmt.Println("\n🚀 Live Delivery Updates 🚀")
-			fmt.Println(string(data))
-
-			// Clear file after reading to avoid duplicates
-			os.WriteFile(statusFile, []byte{}, 0644)
+		transport, err := factory.GetTransportMethod(transportType)
+		if err != nil {
+			fmt.Println("Error creating transport:", err)
+			continue
 		}
-		time.Sleep(5 * time.Second)
-	}
-}
 
-func main() {
-	fmt.Println("📦 Delivery Tracking System Running...")
-	readStatus()
+		statusMessage := fmt.Sprintf("%s is delivering your package...\n", transport.GetStatus())
+		fmt.Print(statusMessage)
+		utils.LogStatus(statusMessage)
+
+		ch := make(chan string)
+		go func() {
+			status, err := transport.DeliverPackage("Destination")
+			if err != nil {
+				ch <- fmt.Sprintf("Delivery failed: %v ❌", err)
+			} else {
+				ch <- status
+			}
+		}()
+
+		fmt.Println("Delivery in progress... ⏳")
+		time.Sleep(time.Second * 2)
+
+		result := <-ch
+		fmt.Println(result)
+		utils.LogStatus(result)
+
+		prompt := promptui.Prompt{
+			Label: "Do you want to make another delivery? (yes/no)",
+		}
+		response, _ := prompt.Run()
+		if strings.ToLower(response) != "yes" {
+			break
+		}
+	}
 }

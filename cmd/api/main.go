@@ -2,75 +2,65 @@ package main
 
 import (
 	"fmt"
-	"strings"
+	"sync"
 	"time"
 
 	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/factory"
+	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/tracking"
 	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/utils"
-	"github.com/manifoldco/promptui"
 )
 
-// Système de suivi
-
-// func main() {
-// 	ch := make(chan string, 3) // Buffer pour éviter les blocages
-
-// 	transports := []string{"truck", "drone", "boat"}
-
-// 	for _, t := range transports {
-// 		transport, err := factory.GetTransportMethod(t)
-// 		if err != nil {
-// 			fmt.Println("Erreur création transport:", err)
-// 			continue
-// 		}
-// 		go tracking.TrackDelivery(transport, "Destination "+t, ch)
-// 	}
-
-// 	// Collecte des résultats
-// 	for range transports {
-// 		fmt.Println(<-ch)
-// 	}
-// }
+const statusFile = "status.log"
 
 func main() {
-	for {
-		transportType := utils.InteractiveMenu()
-		if transportType == "" {
-			continue
-		}
-		transport, err := factory.GetTransportMethod(transportType)
+	fmt.Println("📦 Delivery Tracking Simulation starting...")
+
+	ch := make(chan string, 3) // Buffered channel
+	var wg sync.WaitGroup      // WaitGroup to wait for deliveries
+
+	transports := []string{"truck", "drone", "boat"}
+
+	// Launch tracking for each transport
+	for _, t := range transports {
+		transport, err := factory.GetTransportMethod(t)
 		if err != nil {
-			fmt.Println("Error creating transport:", err)
+			fmt.Println("Erreur création transport:", err)
 			continue
 		}
+		wg.Add(1)
+		go func(transportType string) {
+			defer wg.Done()
+			tracking.TrackDelivery(transport, "Destination "+transportType, ch)
+		}(t)
+	}
 
-		statusMessage := fmt.Sprintf("%s is delivering your package...\n", transport.GetStatus())
-		fmt.Print(statusMessage)
-		utils.LogStatus(statusMessage)
-
-		ch := make(chan string)
-		go func() {
-			status, err := transport.DeliverPackage("Destination")
-			if err != nil {
-				ch <- fmt.Sprintf("Delivery failed: %v ❌", err)
-			} else {
-				ch <- status
-			}
-		}()
-
-		fmt.Println("Delivery in progress... ⏳")
-		time.Sleep(time.Second * 2)
-
-		result := <-ch
-		fmt.Println(result)
-		utils.LogStatus(result)
-
-		prompt := promptui.Prompt{
-			Label: "Do you want to make another delivery? (yes/no)",
+	// Collect delivery results
+	go func() {
+		for range transports {
+			fmt.Println(<-ch)
 		}
-		response, _ := prompt.Run()
-		if strings.ToLower(response) != "yes" {
-			break
+	}()
+
+	// Wait for all deliveries to complete
+	wg.Wait()
+	fmt.Println("📦 Delivery Tracking Simulation ended.")
+
+	utils.ClearLog(statusFile)
+	// Now start reading status updates
+	readStatus()
+}
+
+// Reads delivery updates periodically after simulation ends
+func readStatus() {
+	fmt.Println("📦 Delivery Tracking System Running...")
+
+	for {
+		data, err := utils.ReadLog(statusFile)
+		if err == nil && len(data) > 0 {
+			fmt.Println("\n🚀 Live Delivery Updates 🚀")
+			fmt.Println(data)
+			utils.ClearLog(statusFile) // Prevent duplicate messages
 		}
+		time.Sleep(5 * time.Second)
 	}
 }
