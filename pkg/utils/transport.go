@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/models"
 )
@@ -20,7 +21,8 @@ func RechargeDrone(drone *models.Drone, amount int) {
 
 // Load packages into truck
 func LoadTruck(truck *models.Truck, packages int) error {
-	if truck.Capacity+packages > truck.Capacity {
+	fmt.Println("loading truck ...")
+	if truck.Capacity+packages > 100 {
 		return errors.New("dépassement de la capacité")
 	}
 	truck.Capacity += packages

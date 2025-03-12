@@ -10,11 +10,11 @@ import (
 func GetTransportMethod(method string) (interfaces.TransportMethod, error) {
 	switch method {
 	case "truck":
-		return models.Truck{ID: "T123", Capacity: 10}, nil
+		return &models.Truck{ID: "T123", Capacity: 10}, nil
 	case "drone":
-		return models.Drone{ID: "D456", Battery: 100}, nil
+		return &models.Drone{ID: "D456", Battery: 100}, nil
 	case "boat":
-		return models.Boat{ID: "B789", Weather: "Clear"}, nil
+		return &models.Boat{ID: "B789", Weather: "Clear"}, nil
 	default:
 		return nil, errors.New("unknown transport method")
 	}
