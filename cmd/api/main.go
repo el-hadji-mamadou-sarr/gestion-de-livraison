@@ -2,39 +2,65 @@ package main
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/factory"
-	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/models"
 	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/tracking"
 	"github.com/el-hadji-mamadou-sarr/gestion-de-livraison.git/pkg/utils"
 )
 
-// Système de suivi
+const statusFile = "status.log"
 
 func main() {
-	ch := make(chan string, 3) // Buffer pour éviter les blocages
+	fmt.Println("📦 Delivery Tracking Simulation starting...")
+
+	ch := make(chan string, 3) // Buffered channel
+	var wg sync.WaitGroup      // WaitGroup for tracking completion
 
 	transports := []string{"truck", "drone", "boat"}
 
+	// Launch tracking for each transport
 	for _, t := range transports {
-
 		transport, err := factory.GetTransportMethod(t)
-
 		if err != nil {
 			fmt.Println("Erreur création transport:", err)
 			continue
 		}
-
-		if truck, ok := transport.(*models.Truck); ok {
-			utils.LoadTruck(truck, 20)
-		}
-
-		go tracking.TrackDelivery(transport, "Destination "+t, ch)
-
+		wg.Add(1)
+		go func(transportType string) {
+			defer wg.Done()
+			tracking.TrackDelivery(transport, "Destination "+transportType, ch)
+		}(t)
 	}
 
-	// Collecte des résultats
-	for range transports {
-		fmt.Println(<-ch)
+	// Collect delivery results
+	go func() {
+		for range transports {
+			fmt.Println(<-ch)
+		}
+		fmt.Println("📦 Delivery Tracking Simulation ended.")
+	}()
+
+	// Wait for all deliveries to complete
+	wg.Wait()
+
+	utils.ClearLog(statusFile)
+	// Now start reading status updates
+	readStatus()
+}
+
+// Reads delivery updates periodically after simulation ends
+func readStatus() {
+	fmt.Println("📦 Delivery Tracking System Running...")
+
+	for {
+		data, err := utils.ReadLog(statusFile)
+		if err == nil && len(data) > 0 {
+			fmt.Println("\n📦 Live Delivery Updates 📦")
+			fmt.Println(data)
+			utils.ClearLog(statusFile) // Prevent duplicate messages
+		}
+		time.Sleep(5 * time.Second)
 	}
 }
