@@ -16,7 +16,7 @@ func main() {
 	fmt.Println("📦 Delivery Tracking Simulation starting...")
 
 	ch := make(chan string, 3) // Buffered channel
-	var wg sync.WaitGroup      // WaitGroup to wait for deliveries
+	var wg sync.WaitGroup      // WaitGroup for tracking completion
 
 	transports := []string{"truck", "drone", "boat"}
 
@@ -39,11 +39,11 @@ func main() {
 		for range transports {
 			fmt.Println(<-ch)
 		}
+		fmt.Println("📦 Delivery Tracking Simulation ended.")
 	}()
 
 	// Wait for all deliveries to complete
 	wg.Wait()
-	fmt.Println("📦 Delivery Tracking Simulation ended.")
 
 	utils.ClearLog(statusFile)
 	// Now start reading status updates
@@ -57,7 +57,7 @@ func readStatus() {
 	for {
 		data, err := utils.ReadLog(statusFile)
 		if err == nil && len(data) > 0 {
-			fmt.Println("\n🚀 Live Delivery Updates 🚀")
+			fmt.Println("\n📦 Live Delivery Updates 📦")
 			fmt.Println(data)
 			utils.ClearLog(statusFile) // Prevent duplicate messages
 		}

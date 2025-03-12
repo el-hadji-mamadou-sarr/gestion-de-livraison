@@ -16,9 +16,9 @@ func (b Boat) DeliverPackage(destination string) (string, error) {
 		return "", errors.New("conditions météo défavorables")
 	}
 	time.Sleep(5 * time.Second) // Livraison lente
-	return fmt.Sprintf("⛴ Bateau %s: Colis livré à %s", b.ID, destination), nil
+	return fmt.Sprintf("⛴ Bateau %s: Colis livré à %s Date: %s", b.ID, destination, time.Now().Format("2006-01-02 15:04:05")), nil
 }
 
 func (b Boat) GetStatus() string {
-	return fmt.Sprintf("Bateau %s: Météo actuelle - %s", b.ID, b.Weather, time.Now().Format("  2006-01-02 15:04:05"))
+	return fmt.Sprintf("Bateau: %s - Météo actuelle: %s", b.ID, b.Weather)
 }
